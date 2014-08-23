@@ -11,6 +11,7 @@ Unittests for human_curl
 """
 from __future__ import with_statement
 
+import io
 import os
 import time
 import pycurl2 as pycurl
@@ -207,8 +208,8 @@ class RequestsTestCase(BaseTestCase):
         self.assertTrue(data in r.content)
 
     def test_FILES(self):
-        files = {'test_file': open('tests.py'),
-                 'test_file2': open('README.rst')}
+        files = {'test_file': io.open('tests.py'),
+                 'test_file2': io.open('README.rst')}
         r = requests.post(build_url('post'),
                           files=files)
         json_response = json.loads(r.content)
@@ -217,8 +218,8 @@ class RequestsTestCase(BaseTestCase):
             self.assertTrue(k in json_response['files'].keys())
 
     def test_POST_DATA_and_FILES(self):
-        files = {'test_file': open('tests.py'),
-               'test_file2': open('README.rst')}
+        files = {'test_file': io.open('tests.py'),
+               'test_file2': io.open('README.rst')}
         random_key1 = "key_" + uuid.uuid4().get_hex()[:10]
         random_value1 = "value_" + uuid.uuid4().get_hex()
         random_key2 = "key_" + uuid.uuid4().get_hex()[:10]
@@ -231,8 +232,8 @@ class RequestsTestCase(BaseTestCase):
         self.assertEquals(r.status_code, 201)
 
     def test_PUT_DATA_and_FILES(self):
-        files = {'test_file': open('tests.py'),
-                 'test_file2': open('README.rst')}
+        files = {'test_file': io.open('tests.py'),
+                 'test_file2': io.open('README.rst')}
         random_key1 = "key_" + uuid.uuid4().get_hex()[:10]
         random_key2 = "key_" + uuid.uuid4().get_hex()[:10]
         random_value2 = "value_" + uuid.uuid4().get_hex()
@@ -585,8 +586,8 @@ class UtilsTestCase(BaseTestCase):
 
     def test_curl_post_files(self):
         test_files = (('field_file_name', './README.rst'),
-                      ('field_file_name2', open('./setup.py')),
-                      ('multiple_files_field', (open("./README.rst"), "./setup.py")))
+                      ('field_file_name2', io.open('./setup.py')),
+                      ('multiple_files_field', (io.open("./README.rst"), "./setup.py")))
 
         curl_files_dict = make_curl_post_files(test_files)
 

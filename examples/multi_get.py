@@ -159,7 +159,7 @@ if __name__ == '__main__':
         yql_query = "select * from search.web(%d) where query=\"%s\"" % (100, query)
         url = 'http://query.yahooapis.com/v1/public/yql?q=%s&format=json' % urllib.urlencode({'':yql_query})[1:]
         try:
-            url_read = urllib.urlopen(url).read()
+            url_read = urllib.urlio.open(url).read()
             urls += list([i['url'] for i in cjson.decode(url_read)['query']['results']['result']])
         except: pass
 

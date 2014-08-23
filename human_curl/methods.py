@@ -33,8 +33,8 @@ def request(method, url, params=None, data=None, headers=None, cookies=None,
     - `files`: (dict, tuple or list) of files
        Example:
            (('field_file_name', '/path/to/file.txt'),
-           ('field_file_name', open('/path/to/file.txt')),
-           ('multiple_files_field', (open("/path/to/file.1.txt"), open("/path/to/file.1.txt"))),
+           ('field_file_name', io.open('/path/to/file.txt')),
+           ('multiple_files_field', (io.open("/path/to/file.1.txt"), io.open("/path/to/file.1.txt"))),
            ('multiple_files_field', ("/path/to/file.1.txt", "/path/to/file.1.txt")))
     - `timeout`: (float) connection time out
     - `connection_timeout`: (float)

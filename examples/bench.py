@@ -31,9 +31,9 @@ with timer("python-requests"):
 
 
 files =  {
-    #('first_file', open("/tmp/testfile1.txt.gz")),
-    'first_file': open("/tmp/testfile2.txt"),
-    'second_file': open("/tmp/testfile3.txt"),
+    #('first_file', io.open("/tmp/testfile1.txt.gz")),
+    'first_file': io.open("/tmp/testfile2.txt"),
+    'second_file': io.open("/tmp/testfile3.txt"),
     }
 
 #FILES UPLOADING

@@ -69,7 +69,7 @@ Usage
 
     >>> import human_curl as requests
     >>> r = requests.post('http://h.wrttn.me/post', files=(('file_1', '/tmp/testfile1.txt'),
-    ... ('file2', open('/tmp/testfile2.txt'))), data={'var_name': 'var_value'})
+    ... ('file2', io.open('/tmp/testfile2.txt'))), data={'var_name': 'var_value'})
     >>> r.status_code
     201
 

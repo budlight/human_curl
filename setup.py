@@ -22,7 +22,7 @@ except:
 from setuptools import Command, setup
 
 try:
-    readme_content = open(os.path.join(os.path.abspath(
+    readme_content = io.open(os.path.join(os.path.abspath(
         os.path.dirname(__file__)), "README.rst")).read()
 except Exception, e:
     print(e)

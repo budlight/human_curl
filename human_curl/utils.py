@@ -298,15 +298,16 @@ def make_curl_post_files(data):
 
     result = []
     for k, v in iterator:
+        print(k, v)
         if isinstance(v, tuple):
             for k2 in v:
-                if isinstance(k2, io.BaseFile):
+                if isinstance(k2, io.IOBase):
                     result.append((k, checker(k2.name)))
                 elif isinstance(k2, basestring):
                     result.append((k, checker(k2)))
                 else:
                     raise RuntimeError("File %s doesn't exist" % v)
-        elif isinstance(v, io.BaseFile):
+        elif isinstance(v, io.IOBase):
             result.append((k, checker(str(v.name))))
         elif isinstance(v, basestring):
             result.append((k, checker(str(v))))

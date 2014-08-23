@@ -26,7 +26,7 @@ __all__ = ("AsyncClient", "map", "async_client", "get", "head", "post", "put", "
 
 logger = getLogger('human_curl.async')
 
-DEFAULT_MAX_OPENERS = 1000
+DEFAULT_MAX_openerS = 1000
 DEFAULT_SLEEP_TIMEOUT = 2.0
 DEFAULT_INFO_READ_RETRIES_MAX = 10
 
@@ -38,7 +38,7 @@ class AsyncClient(object):
 
     """
 
-    def __init__(self, size=DEFAULT_MAX_OPENERS,
+    def __init__(self, size=DEFAULT_MAX_openerS,
                  success_callback=None, fail_callback=None,
                  process_func=None,
                  sleep_timeout=DEFAULT_SLEEP_TIMEOUT,
