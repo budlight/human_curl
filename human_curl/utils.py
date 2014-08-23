@@ -14,6 +14,7 @@ import zlib
 import time
 import urllib
 import urlparse
+import io
 try:
     import pycurl2 as pycurl
 except ImportError:
@@ -25,7 +26,6 @@ from Cookie import Morsel
 from string import capwords
 from os.path import exists as file_exists
 from cookielib import CookieJar, Cookie
-from types import ListType, DictType, TupleType, FileType, StringTypes
 
 try:
     bytes
@@ -155,9 +155,9 @@ def to_cookiejar(cookies):
         return cookies
 
     tmp_cookies = []
-    if isinstance(cookies, (TupleType, ListType)):
+    if isinstance(cookies, (tuple, list)):
         tmp_cookies = cookies
-    elif isinstance(cookies, DictType):
+    elif isinstance(cookies, dict):
         tmp_cookies = [(k, v) for k, v in cookies.iteritems()]
     else:
         raise ValueError("Unsupported argument")
@@ -256,7 +256,7 @@ def morsel_to_cookie(morsel):
 def helper(d):
     tmp = []
     for k, v in d:
-        if isinstance(v, (TupleType, ListType)):
+        if isinstance(v, (tuple, list)):
             for v2 in v:
                 tmp.append((k, v2))
         else:
@@ -268,9 +268,9 @@ def helper(d):
 def data_wrapper(data):
     """Convert data to list and returns
     """
-    if isinstance(data, DictType):
+    if isinstance(data, dict):
         return helper(data.iteritems())
-    elif isinstance(data, (TupleType, ListType)):
+    elif isinstance(data, (tuple, list)):
         return helper(data)
     elif data is None:
         return data
@@ -282,9 +282,9 @@ def data_wrapper(data):
 def make_curl_post_files(data):
     """Convert parameters dict, list or tuple to cURL style tuple
     """
-    if isinstance(data, (TupleType, ListType)):
+    if isinstance(data, (tuple, list)):
         iterator = data
-    elif isinstance(data, DictType):
+    elif isinstance(data, dict):
         iterator = data.iteritems()
     else:
         raise ValueError("%s argument must be list, tuple or dict, not %s" %
@@ -298,17 +298,17 @@ def make_curl_post_files(data):
 
     result = []
     for k, v in iterator:
-        if isinstance(v, TupleType):
+        if isinstance(v, tuple):
             for k2 in v:
-                if isinstance(k2, FileType):
+                if isinstance(k2, io.BaseFile):
                     result.append((k, checker(k2.name)))
-                elif isinstance(k2, StringTypes):
+                elif isinstance(k2, basestring):
                     result.append((k, checker(k2)))
                 else:
                     raise RuntimeError("File %s doesn't exist" % v)
-        elif isinstance(v, FileType):
+        elif isinstance(v, io.BaseFile):
             result.append((k, checker(str(v.name))))
-        elif isinstance(v, StringTypes):
+        elif isinstance(v, basestring):
             result.append((k, checker(str(v))))
         else:
             raise InterfaceError("Not allowed file value")

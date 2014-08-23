@@ -12,7 +12,6 @@ Authentication module for human curl
 """
 import binascii
 import hmac
-from types import StringTypes, ListType
 
 try:
     import pycurl2 as pycurl
@@ -297,7 +296,7 @@ class OAuthManager(AuthManager):
             self._signature_method = signature_method
         elif signature_method is None:
             self._signature_method = SignatureMethod_PLAINTEXT()
-        elif isinstance(signature_method, StringTypes):
+        elif isinstance(signature_method, basestring):
             if signature_method.upper() in self.SIGNATURES_METHODS.keys():
                 self._signature_method = self.SIGNATURES_METHODS[signature_method.upper()]()
             else:
@@ -431,7 +430,7 @@ class OAuthManager(AuthManager):
 
     def setup(self, curl_opener):
         if self._state == 7:
-            if isinstance(self._parent_request._headers, ListType):
+            if isinstance(self._parent_request._headers, list):
                 self._parent_request._headers.append(('Authorization', str(self.auth_header())))
             else:
                 self._parent_request._headers = data_wrapper({'Authorization': str(self.auth_header())})

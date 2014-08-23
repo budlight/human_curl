@@ -24,3 +24,6 @@ pip-log.txt
 *.egg-info*
 dist/*
 _build/*
+ve/
+ve3/
+*.egg
