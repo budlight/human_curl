@@ -10,7 +10,7 @@ Exceptions module for cURL for Humans
 :license: BSD, see LICENSE for more details.
 """
 
-from httplib import responses
+from http.client import responses
 
 __all__ = ("HTTPError", "InvalidMethod", "CurlError", "InterfaceError")
 
@@ -38,7 +38,7 @@ class CurlError(Exception):
     def __init__(self, code, message=None):
         self.code = code
         message = message or responses.get(code, "Unknown")
-        Exception.__init__(self, "%d: %s" % (self.code, message))
+        Exception.__init__(self, "%s: %s" % (self.code, message))
 
 class InterfaceError(Exception):
     """Raises when get not allowed parametr type

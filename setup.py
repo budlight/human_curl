@@ -1,108 +1,63 @@
 #!/usr/bin/env python
-# -*- coding:  utf-8 -*-
-"""
-human_curl
-~~~~~~~~~~
 
-Simple cURL wrapper for Humans
-
-:copyright: (c) 2011 - 2012 by Alexandr Lispython (alex@obout.ru).
-:license: BSD, see LICENSE for more details.
-"""
-
-
-import sys
 import os
-try:
-    import subprocess
-    has_subprocess = True
-except:
-    has_subprocess = False
+import sys
 
-from setuptools import Command, setup
+import human_curl
+
+from codecs import open
 
 try:
-    readme_content = io.open(os.path.join(os.path.abspath(
-        os.path.dirname(__file__)), "README.rst")).read()
-except Exception, e:
-    print(e)
-    readme_content = __doc__
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
-VERSION = "0.1.8"
+if sys.argv[-1] == 'publish':
+    os.system('python setup.py sdist upload')
+    sys.exit()
 
-
-class run_audit(Command):
-    """Audits source code using PyFlakes for following issues:
-        - Names which are used but not defined or used before they are defined.
-        - Names which are redefined without having been used.
-    """
-    description = "Audit source code with PyFlakes"
-    user_options = []
-
-    def initialize_options(self):
-        all = None
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        try:
-            import pyflakes.scripts.pyflakes as flakes
-        except ImportError:
-            print "Audit requires PyFlakes installed in your system."""
-            sys.exit(-1)
-
-        dirs = ['human_curl']
-        # Add example directories
-        for dir in []:
-            dirs.append(os.path.join('examples', dir))
-        # TODO: Add test subdirectories
-        warns = 0
-        for dir in dirs:
-            for filename in os.listdir(dir):
-                if filename.endswith('.py') and filename != '__init__.py':
-                    warns += flakes.checkPath(os.path.join(dir, filename))
-        if warns > 0:
-            print ("Audit finished with total %d warnings." % warns)
-        else:
-            print ("No problems found in sourcecode.")
-
-
-def run_tests():
-    from tests import suite
-    return suite()
-
-tests_require = [
-    'nose',
-    'unittest2',
-    'httphq'
+packages = [
+    'human_curl',
 ]
 
+requires = [
+    'pycurl'
+]
+
+with open('README.rst', 'r', 'utf-8') as f:
+    readme = f.read()
+with open('HISTORY.rst', 'r', 'utf-8') as f:
+    history = f.read()
+
 setup(
-    name="human_curl",
-    version=VERSION,
-    description="Simple cURL wrapper for Humans",
-    long_description=readme_content,
-    author="Alex Lispython",
-    author_email="alex@obout.ru",
-    maintainer="Alexandr Lispython",
-    maintainer_email="alex@obout.ru",
-    url="https://github.com/lispython/human_curl",
-    packages=["human_curl"],
-    install_requires=[
-        'pycurl2'],
-    tests_require=tests_require,
-    license="BSD",
-#    test_suite="nose.collector",
-    platforms = ['Linux', 'Mac'],
-    classifiers=[
-        "Environment :: Web Environment",
-        "License :: OSI Approved :: BSD License",
-        "Programming Language :: Python",
-        "Operating System :: MacOS :: MacOS X",
-        "Operating System :: POSIX",
-        "Topic :: Internet",
-        "Topic :: Software Development :: Libraries"
-        ],
-    cmdclass={'audit': run_audit},
-    test_suite = '__main__.run_tests')
+    name='human_curl',
+    version=human_curl.__version__,
+    description='Python HTTP for Humans.',
+    long_description=readme + '\n\n' + history,
+    author='Kenneth Reitz',
+    author_email='me@kennethreitz.com',
+    url='http://python-requests.org',
+    packages=packages,
+    package_data={'': ['LICENSE', 'NOTICE'], 'human_curl': ['*.pem']},
+    package_dir={'human_curl': 'human_curl'},
+    include_package_data=True,
+    install_requires=requires,
+    license='Apache 2.0',
+    zip_safe=False,
+    classifiers=(
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'Natural Language :: English',
+        'License :: OSI Approved :: Apache Software License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4'
+
+    ),
+    extras_require={
+        'security': ['pyOpenSSL', 'ndg-httpsclient', 'pyasn1'],
+    },
+)

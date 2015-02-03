@@ -27,3 +27,10 @@ _build/*
 ve/
 ve3/
 *.egg
+
+
+
+#ide stuff
+.idea/workspace.xml
+.idea/misc.xml
+.idea/quadraform.iml

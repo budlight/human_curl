@@ -9,24 +9,23 @@ Unittests for human_curl
 :copyright: (c) 2011 - 2012 by Alexandr Lispython (alex@obout.ru).
 :license: BSD, see LICENSE for more details.
 """
-from __future__ import with_statement
 
 import io
 import os
 import time
-import pycurl2 as pycurl
-import cookielib
-from Cookie import Morsel
+import pycurl
+import http.cookiejar
+from http.cookies import Morsel
 import json
 import uuid
 from random import randint, choice
 from string import ascii_letters, digits
 import logging
-from urlparse import urljoin
+from urllib.parse import urljoin
 import unittest
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from types import FunctionType
-from urllib import urlencode
+from urllib.parse import urlencode
 
 import human_curl as requests
 from human_curl import Request, Response
@@ -66,7 +65,7 @@ HTTP_TEST_URL = os.environ.get('HTTP_TEST_URL', 'http://h.wrttn.me')
 HTTPS_TEST_URL = os.environ.get('HTTPS_TEST_URL', 'https://h.wrttn.me')
 
 
-print("Use {0} as test server".format(HTTP_TEST_URL))
+CurlError("Use {0} as test server".format(HTTP_TEST_URL))
 
 def build_url(*parts):
     return urljoin(HTTP_TEST_URL, "/".join(parts))
@@ -81,16 +80,16 @@ def stdout_debug(debug_type, debug_msg):
     """
     debug_types = ('I', '<', '>', '<', '>')
     if debug_type == 0:
-        print('%s' % debug_msg.strip())
+        print(('%s' % debug_msg.strip()))
     elif debug_type in (1, 2):
         for line in debug_msg.splitlines():
-            print('%s %s' % (debug_types[debug_type], line))
+            print(('%s %s' % (debug_types[debug_type], line)))
     elif debug_type == 4:
-        print('%s %r' % (debug_types[debug_type], debug_msg))
+        print(('%s %r' % (debug_types[debug_type], debug_msg)))
 
 
 def random_string(num=10):
-    return ''.join([choice(ascii_letters + digits) for x in xrange(num)])
+    return ''.join([choice(ascii_letters + digits) for x in range(num)])
 
 
 class BaseTestCase(unittest.TestCase):
@@ -100,7 +99,7 @@ class BaseTestCase(unittest.TestCase):
         return random_string(10)
 
     def random_dict(self, num=10):
-        return dict([(self.random_string(10), self.random_string(10))for x in xrange(10)])
+        return dict([(self.random_string(10), self.random_string(10))for x in range(10)])
 
     def request_params(self):
         data = self.random_dict(10)
@@ -208,17 +207,17 @@ class RequestsTestCase(BaseTestCase):
         self.assertTrue(data in r.content)
 
     def test_FILES(self):
-        files = {'test_file': io.open('tests.py'),
+        files = {'test_file': io.open('test_human_curl.py'),
                  'test_file2': io.open('README.rst')}
         r = requests.post(build_url('post'),
                           files=files)
         json_response = json.loads(r.content)
         self.assertEquals(r.status_code, 201)
-        for k, v in files.items():
-            self.assertTrue(k in json_response['files'].keys())
+        for k, v in list(files.items()):
+            self.assertTrue(k in list(json_response['files'].keys()))
 
     def test_POST_DATA_and_FILES(self):
-        files = {'test_file': io.open('tests.py'),
+        files = {'test_file': io.open('test_human_curl.py'),
                'test_file2': io.open('README.rst')}
         random_key1 = "key_" + uuid.uuid4().get_hex()[:10]
         random_value1 = "value_" + uuid.uuid4().get_hex()
@@ -232,7 +231,7 @@ class RequestsTestCase(BaseTestCase):
         self.assertEquals(r.status_code, 201)
 
     def test_PUT_DATA_and_FILES(self):
-        files = {'test_file': io.open('tests.py'),
+        files = {'test_file': io.open('test_human_curl.py'),
                  'test_file2': io.open('README.rst')}
         random_key1 = "key_" + uuid.uuid4().get_hex()[:10]
         random_key2 = "key_" + uuid.uuid4().get_hex()[:10]
@@ -253,7 +252,7 @@ class RequestsTestCase(BaseTestCase):
         cookies = ((random_key, random_value),
                    (random_key2, random_value2))
 
-        cookies_jar = cookielib.CookieJar()
+        cookies_jar = http.cookiejar.CookieJar()
 
         r1 = requests.get(build_url("cookies", "set", random_key, random_value),
                      cookies=cookies_jar, debug=stdout_debug)
@@ -357,6 +356,8 @@ class RequestsTestCase(BaseTestCase):
 
     def test_gzip(self):
         r = requests.get(build_url("gzip"), use_gzip=True)
+        print((r.request._headers))
+        print((r.headers))
 
         self.assertEquals(r.headers['Content-Encoding'], 'gzip')
 
@@ -400,7 +401,7 @@ class RequestsTestCase(BaseTestCase):
                                     urlencode(((random_key, random_value1), (random_key, random_value2)))), r.url)
 
         json_response = json.loads(r.content)
-        self.assertTrue(isinstance(r.json, (dict, dict)))
+        self.assertTrue(isinstance(r.json, dict))
         self.assertEquals(json_response, r.json)
         self.assertTrue(random_value1 in r.json['args'][random_key])
         self.assertTrue(random_value2 in r.json['args'][random_key])
@@ -422,7 +423,7 @@ class RequestsTestCase(BaseTestCase):
         # Invalid by HTTP spec
         try:
             response = requests.get(build_url("get""?%s=%s" % (key, value)), params=params, encode_query=False)
-        except CurlError, e:
+        except CurlError as e:
             self.assertEqual(e.code, 52)
         else:
             self.assertEquals(response.status_code, 502)
@@ -476,11 +477,11 @@ class UtilsTestCase(BaseTestCase):
             "CamelCaseKey": uuid.uuid4().hex}
         cidict = CaseInsensitiveDict(test_data)
 
-        for k, v in test_data.items():
+        for k, v in list(test_data.items()):
             self.assertTrue(cidict[k], v)
 
     def test_cookies_from_jar(self):
-        test_cookie_jar = cookielib.CookieJar()
+        test_cookie_jar = http.cookiejar.CookieJar()
 
         cookies_dict = from_cookiejar(test_cookie_jar)
 
@@ -488,8 +489,8 @@ class UtilsTestCase(BaseTestCase):
             self.assertEquals(cookies_dict[cookie.name], cookie.value)
 
     def test_jar_from_cookies(self):
-        cookies_dict = dict([(uuid.uuid4().hex, uuid.uuid4().hex) for x in xrange(10)])
-        cookies_list = [(uuid.uuid4().hex, uuid.uuid4().hex) for x in xrange(10)]
+        cookies_dict = dict([(uuid.uuid4().hex, uuid.uuid4().hex) for x in range(10)])
+        cookies_list = [(uuid.uuid4().hex, uuid.uuid4().hex) for x in range(10)]
 
         cookiejar1 = to_cookiejar(cookies_dict)
         cookiejar2 = to_cookiejar(cookies_list)
@@ -507,7 +508,7 @@ class UtilsTestCase(BaseTestCase):
         try:
             from cString import StringIO
         except ImportError:
-            from StringIO import StringIO
+            from io import StringIO
 
         data_for_gzip = Request.__doc__
         tmp_buffer = StringIO()
@@ -646,7 +647,7 @@ class AuthManagersTestCase(BaseTestCase):
                         'uri': '/dir/index.html',
                         'response': '6629fae49393a05397450978507c4ef1'}
 
-        for k, v in control_dict.iteritems():
+        for k, v in list(control_dict.items()):
             self.assertEquals(digest_authorization[k], v)
 
         self.assertTrue(isinstance(digest_authorization, Authorization))
@@ -670,14 +671,14 @@ class AuthManagersTestCase(BaseTestCase):
                         'oauth_callback': 'http://printer.example.com/ready'}
 
 
-        for k, v in control_dict.iteritems():
+        for k, v in list(control_dict.items()):
             self.assertEquals(oauth_authorization[k], v)
 
         self.assertTrue(isinstance(digest_authorization, Authorization))
 
 
     def test_escape(self):
-        self.assertEquals(urllib.unquote(url_escape("http://sp.example.com/")),
+        self.assertEquals(urllib.parse.unquote(url_escape("http://sp.example.com/")),
                           "http://sp.example.com/")
 
 
@@ -695,7 +696,7 @@ class AuthManagersTestCase(BaseTestCase):
                         'nonce': "dcd98b7102dd2f0e8b11d0f600bfb0c093",
                         'opaque': "5ccc069c403ebaf9f0171e9517f40e41"}
 
-        for k, v in control_dict.iteritems():
+        for k, v in list(control_dict.items()):
             self.assertEquals(parsed_authentication[k], v)
 
         self.assertTrue(isinstance(parsed_authentication, WWWAuthenticate))
@@ -704,7 +705,7 @@ class AuthManagersTestCase(BaseTestCase):
         parsed_oauth_authentication = parse_authenticate_header(oauth_authentication_header_value)
 
         control_dict = {'realm': 'http://sp.example.com/'}
-        for k, v in control_dict.iteritems():
+        for k, v in list(control_dict.items()):
             self.assertEquals(parsed_oauth_authentication[k], v)
 
         self.assertTrue(isinstance(parsed_oauth_authentication, WWWAuthenticate))
@@ -752,7 +753,7 @@ class AuthManagersTestCase(BaseTestCase):
 
 
     def test_signature_PLAIN_TEXT(self):
-        url = u'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\u2766,+CA'
+        url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\\u2766,+CA'
 
         request = {'method': 'POST',
                    'normalized_url': normalize_url(url),
@@ -766,11 +767,11 @@ class AuthManagersTestCase(BaseTestCase):
 
 
     def test_normalize_parameters(self):
-        url = u'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\u2766,+CA'
+        url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\\u2766,+CA'
         parameters = 'address=41%20Decatur%20St%2C%20San%20Francisc%E2%9D%A6%2C%20CA&category=animal&q=monkeys'
         self.assertEquals(parameters, normalize_parameters(url))
 
-        url = u'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\u2766,+CA'
+        url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\\u2766,+CA'
         self.assertEquals(parameters, normalize_parameters(url))
 
         url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\xe2\x9d\xa6,+CA'
@@ -779,18 +780,18 @@ class AuthManagersTestCase(BaseTestCase):
         url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc%E2%9D%A6,+CA'
         self.assertEquals(parameters, normalize_parameters(url))
 
-        url = u'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc%E2%9D%A6,+CA'
+        url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc%E2%9D%A6,+CA'
         self.assertEquals(parameters, normalize_parameters(url))
 
 
 
     def test_normalize_url(self):
-        url = u'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\u2766,+CA'
+        url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\\u2766,+CA'
         control_url = "http://api.simplegeo.com/1.0/places/address.json"
 
         self.assertEquals(control_url, normalize_url(url))
 
-        url = u'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\u2766,+CA'
+        url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\\u2766,+CA'
         self.assertEquals(control_url, normalize_url(url))
 
         url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc\xe2\x9d\xa6,+CA'
@@ -799,7 +800,7 @@ class AuthManagersTestCase(BaseTestCase):
         url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc%E2%9D%A6,+CA'
         self.assertEquals(control_url, normalize_url(url))
 
-        url = u'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc%E2%9D%A6,+CA'
+        url = 'http://api.simplegeo.com:80/1.0/places/address.json?q=monkeys&category=animal&address=41+Decatur+St,+San+Francisc%E2%9D%A6,+CA'
         self.assertEquals(control_url, normalize_url(url))
 
 
@@ -828,7 +829,7 @@ class AuthManagersTestCase(BaseTestCase):
         tmp_token_key = "kfwbehlfbqlihrbwf"
         tmp_token_secret = "dlewknfd3jkr4nbfklb5ihrlbfg"
 
-        verifier = ''.join(map(str, [randint(1, 40) for x in xrange(7)]))
+        verifier = ''.join(map(str, [randint(1, 40) for x in range(7)]))
 
         request_token_url = build_url("oauth/1.0/request_token/%s/%s/%s/%s" % \
                              (consumer_key, consumer_secret, tmp_token_key, tmp_token_secret))
@@ -907,7 +908,7 @@ class AuthManagersTestCase(BaseTestCase):
         tmp_token_key = "kfwbehlfbqlihrbwf"
         tmp_token_secret = "dlewknfd3jkr4nbfklb5ihrlbfg"
 
-        verifier = ''.join(map(str, [randint(1, 40) for x in xrange(7)]))
+        verifier = ''.join(map(str, [randint(1, 40) for x in range(7)]))
 
         request_token_url = build_url("oauth/1.0/request_token/%s/%s/%s/%s" % \
                              (consumer_key, consumer_secret, tmp_token_key, tmp_token_secret))
@@ -986,7 +987,7 @@ class AuthManagersTestCase(BaseTestCase):
         tmp_token_key = "kfwbehlfbqlihrbwf"
         tmp_token_secret = "dlewknfd3jkr4nbfklb5ihrlbfg"
 
-        verifier = ''.join(map(str, [randint(1, 40) for x in xrange(7)]))
+        verifier = ''.join(map(str, [randint(1, 40) for x in range(7)]))
 
         request_token_url = build_url("oauth/1.0/request_token/%s/%s/%s/%s" % \
                              (consumer_key, consumer_secret, tmp_token_key, tmp_token_secret))
@@ -1075,8 +1076,8 @@ class AsyncTestCase(BaseTestCase):
         # Test process_func
         def process_func(num_processed, remaining, num_urls,
                          success_len, error_len):
-            print("\nProcess {0} {1} {2} {3} {4}".format(num_processed, remaining, num_urls,
-                                                         success_len, error_len))
+            print(("\nProcess {0} {1} {2} {3} {4}".format(num_processed, remaining, num_urls,
+                                                         success_len, error_len)))
             self.assertEquals(num_urls, 2)
 
         def fail_callback(request, errno, errmsg, async_client, opener):
@@ -1146,8 +1147,8 @@ class AsyncTestCase(BaseTestCase):
             # Test process_func
             def process_func(num_processed, remaining, num_urls,
                              success_len, error_len):
-                print("\nProcess {0} {1} {2} {3} {4}".format(num_processed, remaining, num_urls,
-                                                             success_len, error_len))
+                print(("\nProcess {0} {1} {2} {3} {4}".format(num_processed, remaining, num_urls,
+                                                             success_len, error_len)))
                 self.assertEquals(num_urls, 2)
 
             def fail_callback(request, errno, errmsg, async_client, opener):

@@ -12,32 +12,25 @@ Utils module of cURL for Humans
 
 import zlib
 import time
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import io
-try:
-    import pycurl2 as pycurl
-except ImportError:
-    import pycurl
+
+import pycurl
 import random
-from urllib2 import parse_http_list
 from logging import getLogger
-from Cookie import Morsel
+from http.cookies import Morsel
 from string import capwords
 from os.path import exists as file_exists
-from cookielib import CookieJar, Cookie
+from http.cookiejar import CookieJar, Cookie
 
 try:
     bytes
 except Exception:
     bytes = str
 
-try:
-    from urlparse import parse_qs
-    parse_qs # placate pyflakes
-except ImportError:
-    # fall back for Python 2.5
-    from cgi import parse_qs
+from urllib.parse import parse_qs
+
 
 from .exceptions import InterfaceError
 
@@ -53,7 +46,7 @@ logger = getLogger("human_curl.core")
 def url_escape(value):
     """Returns a valid URL-encoded version of the given value."""
     """Escape a URL including any /."""
-    return urllib.quote(value.encode('utf-8'), safe='~')
+    return urllib.parse.quote(value.encode('utf-8'), safe='~')
 #    return quote_plus(utf8(value))
 
 _UTF8_TYPES = (bytes, type(None))
@@ -65,10 +58,10 @@ def utf8(value):
     """
     if isinstance(value, _UTF8_TYPES):
         return value
-    assert isinstance(value, unicode)
+    assert isinstance(value, str)
     return to_unicode(value).encode("utf-8")
 
-_TO_UNICODE_TYPES = (unicode, type(None))
+_TO_UNICODE_TYPES = (str, type(None))
 def to_unicode(value):
     """Converts a string argument to a unicode string.
 
@@ -100,7 +93,7 @@ class CaseInsensitiveDict(dict):
 
     def __init__(self, *args, **kwargs):
         tmp_d = dict(*args, **kwargs)
-        super(CaseInsensitiveDict, self).__init__([(k.lower(), v) for k, v in tmp_d.iteritems()])
+        super(CaseInsensitiveDict, self).__init__([(k.lower(), v) for k, v in list(tmp_d.items())])
 
     def __setitem__(self, key, value):
         super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
@@ -115,10 +108,10 @@ class CaseInsensitiveDict(dict):
         return super(CaseInsensitiveDict, self).__getitem__(key.lower())
 
     def has_key(self, key):
-        return super(CaseInsensitiveDict, self).has_key(key.lower())
+        return key.lower() in super(CaseInsensitiveDict, self)
 
     def iteritems(self):
-        return ((capwords(k, '-'), v) for k, v in super(CaseInsensitiveDict, self).iteritems())
+        return ((capwords(k, '-'), v) for k, v in list(super(CaseInsensitiveDict, self).items()))
 
 
 def from_cookiejar(cookiejar):
@@ -135,9 +128,9 @@ def from_cookiejar(cookiejar):
     # for cookie in cookiejar:
     #    cookies[cookie.name] = cookie.value
 
-    for domain, d_cookies in cookiejar._cookies.iteritems():
-        for path, p_cookies in d_cookies.iteritems():
-            for cookie in p_cookies.values():
+    for domain, d_cookies in list(cookiejar._cookies.items()):
+        for path, p_cookies in list(d_cookies.items()):
+            for cookie in list(p_cookies.values()):
                 cookies[cookie.name] = cookie.value
     return cookies
 
@@ -158,7 +151,7 @@ def to_cookiejar(cookies):
     if isinstance(cookies, (tuple, list)):
         tmp_cookies = cookies
     elif isinstance(cookies, dict):
-        tmp_cookies = [(k, v) for k, v in cookies.iteritems()]
+        tmp_cookies = [(k, v) for k, v in list(cookies.items())]
     else:
         raise ValueError("Unsupported argument")
 
@@ -238,7 +231,7 @@ def morsel_to_cookie(morsel):
                 #tmp[attr] = None
             else:
                 tmp[attr] = morsel.get(attr, None)
-        except (IndexError, Exception), e:
+        except (IndexError, Exception) as e:
             pass
 
     tmp['name'] = morsel.key
@@ -246,7 +239,7 @@ def morsel_to_cookie(morsel):
 
     try:
         tmp['version'] = int(tmp['version'])
-    except ValueError, e:
+    except ValueError as e:
         tmp['version'] = 1
 
     cookie = Cookie(**tmp)
@@ -269,7 +262,7 @@ def data_wrapper(data):
     """Convert data to list and returns
     """
     if isinstance(data, dict):
-        return helper(data.iteritems())
+        return helper(iter(list(data.items())))
     elif isinstance(data, (tuple, list)):
         return helper(data)
     elif data is None:
@@ -285,7 +278,7 @@ def make_curl_post_files(data):
     if isinstance(data, (tuple, list)):
         iterator = data
     elif isinstance(data, dict):
-        iterator = data.iteritems()
+        iterator = iter(list(data.items()))
     else:
         raise ValueError("%s argument must be list, tuple or dict, not %s" %
                          ("make_curl_post_files", type(data)))
@@ -298,18 +291,18 @@ def make_curl_post_files(data):
 
     result = []
     for k, v in iterator:
-        print(k, v)
+        print((k, v))
         if isinstance(v, tuple):
             for k2 in v:
                 if isinstance(k2, io.IOBase):
                     result.append((k, checker(k2.name)))
-                elif isinstance(k2, basestring):
+                elif isinstance(k2, str):
                     result.append((k, checker(k2)))
                 else:
                     raise RuntimeError("File %s doesn't exist" % v)
         elif isinstance(v, io.IOBase):
             result.append((k, checker(str(v.name))))
-        elif isinstance(v, basestring):
+        elif isinstance(v, str):
             result.append((k, checker(str(v))))
         else:
             raise InterfaceError("Not allowed file value")
@@ -322,13 +315,13 @@ def parse_dict_header(value):
     """Parse key=value pairs from value list
     """
     result = {}
-    for item in parse_http_list(value):
+    for item in urllib.request.parse_http_list(value):
         if "=" not in item:
             result[item] = None
             continue
         name, value = item.split('=', 1)
         if value[:1] == value[-1:] == '"':
-            value = urllib.unquote(value[1:-1]) # strip " and unquote
+            value = urllib.parse.unquote(value[1:-1]) # strip " and unquote
         result[name] = value
     return result
 
@@ -361,7 +354,7 @@ def parse_authenticate_header(header):
     try:
         auth_type, auth_info = header.split(None, 1)
         auth_type = auth_type.lower()
-    except ValueError, e:
+    except ValueError as e:
         print(e)
         return
     return WWWAuthenticate(auth_type, parse_dict_header(auth_info))
@@ -375,14 +368,14 @@ def parse_authorization_header(header):
     try:
         auth_type, auth_info = header.split(None, 1) # separate auth type and values
         auth_type = auth_type.lower()
-    except ValueError, e:
+    except ValueError as e:
         print(e)
         return
 
     if auth_type == 'basic':
         try:
             username, password = auth_info.decode('base64').split(':', 1)
-        except Exception, e:
+        except Exception as e:
             return
         return Authorization('basic', {'username': username,
                                        'password': password})
@@ -430,7 +423,7 @@ class WWWAuthenticate(dict):
         """
         d = dict(self)
         return "%s %s" % (self._auth_type.title(), ", ".join("%s=\"%s\"" % (k, v)
-                                                             for k, v in d.iteritems()))
+                                                             for k, v in list(d.items())))
 
 
 class Authorization(dict):
@@ -461,7 +454,7 @@ class Authorization(dict):
         """
         d = dict(self)
         return "%s %s" % (self._auth_type, ", ".join("%s=\"%s\"" % (k, v)
-                                                             for k, v in sorted(d.iteritems())))
+                                                             for k, v in sorted(d.items())))
 
 
     # Digest auth properties http://tools.ietf.org/html/rfc2069#page-4
@@ -477,7 +470,7 @@ class Authorization(dict):
 
 def normalize_url(url):
     if url is not None:
-        scheme, netloc, path, params, query, fragment = urlparse.urlparse(url)
+        scheme, netloc, path, params, query, fragment = urllib.parse.urlparse(url)
 
         # Exclude default port numbers.
         if scheme == 'http' and netloc[-3:] == ':80':
@@ -488,7 +481,7 @@ def normalize_url(url):
             raise ValueError("Unsupported URL %s (%s)." % (url, scheme))
 
         # Normalized URL excludes params, query, and fragment.
-        return  urlparse.urlunparse((scheme, netloc, path, None, None, None))
+        return  urllib.parse.urlunparse((scheme, netloc, path, None, None, None))
     else:
         return None
 
@@ -501,33 +494,33 @@ def normalize_parameters(url, params=None):
     """
     items = []
     # Include any query string parameters from the provided URL
-    query = urlparse.urlparse(url)[4]
+    query = urllib.parse.urlparse(url)[4]
     parameters = parse_qs(utf8(query), keep_blank_values=True)
-    for k, v in parameters.iteritems():
-        parameters[k] = urllib.unquote(v[0])
-    url_items = parameters.items()
+    for k, v in list(parameters.items()):
+        parameters[k] = urllib.parse.unquote(v[0])
+    url_items = list(parameters.items())
     url_items = [(utf8(k), utf8(v)) for k, v in url_items if k != 'oauth_signature' ]
     items.extend(url_items)
 
     if params:
-        for key, value in params.iteritems():
+        for key, value in list(params.items()):
             if key == 'oauth_signature':
                 continue
             # 1.0a/9.1.1 states that kvp must be sorted by key, then by value,
             # so we unpack sequence values into multiple items for sorting.
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 items.append((utf8(key), utf8(value)))
             else:
                 try:
                     value = list(value)
-                except TypeError, e:
+                except TypeError as e:
                     assert 'is not iterable' in str(e)
                     items.append((utf8(key), utf8(value)))
                 else:
                     items.extend((utf8(key), utf8(item)) for item in value)
 
     items.sort()
-    encoded_str = urllib.urlencode(items)
+    encoded_str = urllib.parse.urlencode(items)
     # Encode signature parameters per Oauth Core 1.0 protocol
     # spec draft 7, section 3.6
     # (http://tools.ietf.org/html/draft-hammer-oauth-07#section-3.6)
@@ -544,12 +537,12 @@ def stdout_debug(debug_type, debug_msg):
     """
     debug_types = ('I', '<', '>', '<', '>')
     if debug_type == 0:
-        print('%s' % debug_msg.strip())
+        print(('%s' % debug_msg.strip()))
     elif debug_type in (1, 2):
         for line in debug_msg.splitlines():
-            print('%s %s' % (debug_types[debug_type], line))
+            print(('%s %s' % (debug_types[debug_type], line)))
     elif debug_type == 4:
-        print('%s %r' % (debug_types[debug_type], debug_msg))
+        print(('%s %r' % (debug_types[debug_type], debug_msg)))
 
 
 def logger_debug(debug_type, debug_msg):
@@ -577,7 +570,7 @@ def dispatch_hook(key, hooks, data):
     if key in hooks:
         try:
             data = hooks.get(key).__call__(data) or data
-        except Exception, e:
+        except Exception as e:
             logger.warn(str(e))
     return data
 
@@ -598,7 +591,7 @@ def urlnoencode(query):
 
     if hasattr(query, "items"):
         # mapping objects
-        query = query.items()
+        query = list(query.items())
 
     for k, v in query:
         l.append(arg % (k, v))

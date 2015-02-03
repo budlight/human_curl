@@ -12,22 +12,21 @@ Heart of human_curl library
 """
 
 import time
+import io
 from os.path import exists as file_exists
 from logging import getLogger
 from re import compile as re_compile
 from string import capwords
-from urllib import urlencode, quote_plus
-from cookielib import CookieJar
+from urllib.parse import urlencode, quote_plus
+from http.cookiejar import CookieJar
 from itertools import chain
-from urlparse import urlparse, urljoin, urlunparse, parse_qsl
+from urllib.parse import urlparse, urljoin, urlunparse, parse_qsl
 from types import FunctionType
 
-try:
-    import pycurl2 as pycurl
-except ImportError:
-    import pycurl
+
+import pycurl
 from . import get_version
-from .compat import json
+import simplejson as json
 from .auth import AuthManager, BasicAuth
 from .exceptions import (InvalidMethod, CurlError, InterfaceError)
 from .utils import (decode_gzip, CaseInsensitiveDict, to_cookiejar,
@@ -35,7 +34,6 @@ from .utils import (decode_gzip, CaseInsensitiveDict, to_cookiejar,
                     to_unicode, logger_debug, urlnoencode)
 
 
-from StringIO import StringIO
 
 try:
     import platform
@@ -60,7 +58,7 @@ HTTP_GENERAL_RESPONSE_HEADER = re_compile(r"(?P<version>HTTP\/.*?)\s+(?P<code>\d
 
 try:
     CURL_VERSION = PYCURL_VERSION_INFO[1]
-except IndexError, e:
+except IndexError as e:
     CURL_VERSION = ""
     logger.warn("Unknown pycURL / cURL version")
 
@@ -178,7 +176,7 @@ class Request(object):
         - `options`: (tuple, list) low level pycurl options using
         """
         self._url = url
-        if not method or not isinstance(method, basestring):
+        if not method or not isinstance(method, str):
             raise InterfaceError("method argument must be string")
 
         if method.upper() not in self.SUPPORTED_METHODS:
@@ -198,7 +196,7 @@ class Request(object):
         self._params = data_wrapper(params)
 
         # String, dict, tuple, list
-        if isinstance(data, (basestring, type(None))):
+        if isinstance(data, (str, type(None))):
             self._data = data
         else:
             self._data = data_wrapper(data)
@@ -218,7 +216,7 @@ class Request(object):
             else:
                 self._proxy = proxy
 
-        if not isinstance(network_interface, (basestring, type(None))):
+        if not isinstance(network_interface, (str, type(None))):
             raise InterfaceError("Network interface argument must be string or None")
 
         self._network_interface = network_interface
@@ -260,8 +258,8 @@ class Request(object):
 
         self._curl = None
 
-        self.body_output = StringIO()
-        self.headers_output = StringIO()
+        self.body_output = io.StringIO()
+        self.headers_output = io.StringIO()
 
         self._netrc = netrc
         self._netrc_file = None
@@ -307,7 +305,7 @@ class Request(object):
                 if isinstance(value, tuple):
                     for i in value:
                         tmp.append((param, i))
-                elif isinstance(value, basestring):
+                elif isinstance(value, str):
                     tmp.append((param, value))
 
         if tmp:
@@ -347,7 +345,7 @@ class Request(object):
             opener.perform()
             # if close before getinfo, raises pycurl.error can't invote getinfo()
             # opener.close()
-        except pycurl.error, e:
+        except pycurl.error as e:
             raise CurlError(e[0], e[1])
         else:
             self.response = self.make_response()
@@ -365,7 +363,7 @@ class Request(object):
                             cookies=self._cookies)
         try:
             response.parse_cookies()
-        except Exception, e:
+        except Exception as e:
             logger.error(e, exc_info=True)
         return response
 
@@ -421,7 +419,7 @@ class Request(object):
         if getattr(opener, "dirty", True):
             opener = self.clean_opener(opener)
 
-        logger.debug("io.open url: %s" % url)
+        logger.debug("open url: %s" % url)
         opener.setopt(pycurl.URL, url)
         opener.setopt(pycurl.NOSIGNAL, 1)
 
@@ -437,9 +435,9 @@ class Request(object):
         if self._headers:
             logger.debug("Setup custom headers %s" %
                          "\r\n".join(["%s: %s" % (f, v) for f, v
-                                      in CaseInsensitiveDict(self._headers).iteritems()]))
+                                      in list(CaseInsensitiveDict(self._headers).items())]))
             opener.setopt(pycurl.HTTPHEADER, ["%s: %s" % (capwords(f, "-"), v) for f, v
-                                              in CaseInsensitiveDict(self._headers).iteritems()])
+                                              in list(CaseInsensitiveDict(self._headers).items())])
 
         # Option -L  Follow  "Location: "  hints
         if self._allow_redirects is True:
@@ -558,7 +556,7 @@ class Request(object):
             "HEAD": pycurl.NOBODY}
 
         logger.debug("Use method %s for request" % self._method)
-        if self._method in curl_options.values():
+        if self._method in list(curl_options.values()):
             opener.setopt(curl_options[self._method], True)
         elif self._method in self.SUPPORTED_METHODS:
             opener.setopt(pycurl.CUSTOMREQUEST, self._method)
@@ -577,10 +575,10 @@ class Request(object):
                     post_params.extend(data_wrapper(self._data))
                 opener.setopt(opener.HTTPPOST, post_params)
             else:
-                if isinstance(self._data, basestring):
+                if isinstance(self._data, str):
                     logger.debug(("self._data is string"))
                     logger.debug(("self._data", self._data))
-                    request_buffer = StringIO(self._data)
+                    request_buffer = io.StringIO(self._data)
 
                     # raw data for body request
                     opener.setopt(pycurl.READFUNCTION, request_buffer.read)
@@ -608,8 +606,8 @@ class Request(object):
                 opener.setopt(key, value)
 
 
-        self.body_output = StringIO()
-        self.headers_output = StringIO()
+        self.body_output = io.StringIO()
+        self.headers_output = io.StringIO()
 
         self.setup_writers(opener, self.headers_output.write, self.body_output.write)
 
@@ -691,10 +689,10 @@ class Response(object):
         """Extract info from `self._curl_opener` with getinfo()
 
         """
-        for field, value in CURL_INFO_MAP.iteritems():
+        for field, value in list(CURL_INFO_MAP.items()):
             try:
                 field_data = self._curl_opener.getinfo(value)
-            except Exception, e:
+            except Exception as e:
                 logger.warn(e)
                 continue
             else:
@@ -781,7 +779,7 @@ class Response(object):
                 if not header:
                     continue
                 elif not header.startswith("HTTP"):
-                    field, value = map(lambda u: u.strip(), header.split(":", 1))
+                    field, value = [u.strip() for u in header.split(":", 1)]
                     if field.startswith("Location"):
                         # maybe not good
                         if not value.startswith("http"):
@@ -794,7 +792,7 @@ class Response(object):
                     # extract version, code, message from first header
                     try:
                         version, code, message = HTTP_GENERAL_RESPONSE_HEADER.findall(header)[0]
-                    except Exception, e:
+                    except Exception as e:
                         logger.warn(e)
                         continue
                     else:
@@ -818,7 +816,7 @@ class Response(object):
 
 
     def parse_cookies(self):
-        from Cookie import SimpleCookie, CookieError
+        from http.cookies import SimpleCookie, CookieError
 
         if not self._headers_history:
             self._parse_headers_raw()
@@ -836,13 +834,13 @@ class Response(object):
                 try:
                     cookie = SimpleCookie()
                     cookie.load(value)
-                    cookies.extend(cookie.values())
+                    cookies.extend(list(cookie.values()))
 
                     # update cookie jar
-                    for morsel in cookie.values():
+                    for morsel in list(cookie.values()):
                         if isinstance(self._cookies_jar, CookieJar):
                             self._cookies_jar.set_cookie(morsel_to_cookie(morsel))
-                except CookieError, e:
+                except CookieError as e:
                     logger.warn(e)
         self._cookies = dict([(cookie.key, cookie.value) for cookie in cookies])
         return self._cookies

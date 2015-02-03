@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding:  utf-8 -*-
 """
 HUMAN cURL LIBRARY
@@ -29,25 +28,15 @@ Features:
 :license: BSD, see LICENSE for more details.
 """
 
-__all__ = ('get', 'put', 'head', 'post', 'delete', 'request', 'options',
-           'Request', 'Response', 'get_version', 'AsyncClient', 'async_client')
-__author__ = "Alex Lispython (alex@obout.ru)"
-__license__ = "BSD, see LICENSE for more details"
+
+__title__ = 'human_curl'
+__version__ = '2.5.1'
+__author__ = 'Kenneth Reitz'
+__license__ = 'Apache 2.0'
+__copyright__ = 'Copyright 2015 Kenneth Reitz'
 __build__ = 0x000012
-
-try:
-    __version__ = __import__('pkg_resources') \
-        .get_distribution('human_curl').version
-except Exception, e:
-    __version__ = 'unknown'
-
-if __version__ == 'unknown':
-    __version_info__ = (0, 0, 0)
-else:
-    __version_info__ = __version__.split('.')
-
 __maintainer__ = "Alexandr Lispython (alex@obout.ru)"
-
+__package__ = 'human_curl'
 
 def get_version():
     return __version__

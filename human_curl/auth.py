@@ -12,25 +12,19 @@ Authentication module for human curl
 """
 import binascii
 import hmac
+from hashlib import sha1 as sha
 
-try:
-    import pycurl2 as pycurl
-except ImportError:
-    import pycurl
 
-from urllib import urlencode
 
-import methods as hurl
+import pycurl
+
+from urllib.parse import urlencode
+import sys
+print(sys.path)
+
 from .exceptions import InterfaceError
 from .utils import *
 
-
-try:
-    from hashlib import sha1
-    sha = sha1
-except ImportError:
-    # hashlib was added in Python 2.5
-    import sha
 
 
 class AuthManager(object):
@@ -296,8 +290,8 @@ class OAuthManager(AuthManager):
             self._signature_method = signature_method
         elif signature_method is None:
             self._signature_method = SignatureMethod_PLAINTEXT()
-        elif isinstance(signature_method, basestring):
-            if signature_method.upper() in self.SIGNATURES_METHODS.keys():
+        elif isinstance(signature_method, str):
+            if signature_method.upper() in list(self.SIGNATURES_METHODS.keys()):
                 self._signature_method = self.SIGNATURES_METHODS[signature_method.upper()]()
             else:
                 raise RuntimeError('Unknown signature method')
@@ -365,6 +359,8 @@ class OAuthManager(AuthManager):
     def access_request(self):
         """Create request to access token endpoint
         """
+        from .methods import post
+
         params = {
             'oauth_verifier': self._verifier,
             'oauth_token': self._tmp_token_key,
@@ -380,8 +376,7 @@ class OAuthManager(AuthManager):
             'normalized_url': normalize_url(self._access_token_url),
             'normalized_parameters': normalize_parameters(self._access_token_url)
             }, self._consumer._secret, self._tmp_token_secret)
-
-        r = hurl.post(self._access_token_url,
+        r = post(self._access_token_url,
                       data=urlencode(params), debug = self._debug)
 
         ## r = hurl.post(self._access_token_url,
@@ -396,7 +391,7 @@ class OAuthManager(AuthManager):
     def request_token(self):
         """Send request to request_token endpoint
         """
-
+        from .methods import post
         params = {
             'oauth_consumer_key': self._consumer._key,
             'oauth_timestamp': generate_timestamp(),
@@ -411,7 +406,7 @@ class OAuthManager(AuthManager):
             'normalized_parameters': normalize_parameters(self._request_token_url)},
                                                                 self._consumer._secret, None)
 
-        r = hurl.post(self._request_token_url,
+        r = post(self._request_token_url,
                       data=urlencode(params), debug=self._debug)
 
         ## r = hurl.post(self._request_token_url,
