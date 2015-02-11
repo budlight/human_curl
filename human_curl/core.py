@@ -756,6 +756,13 @@ class Response(object):
         return self._content
 
     @property
+    def text(self):
+        """Returns decoded self._content
+        """
+        return self.content.decode('utf-8')
+
+
+    @property
     def json(self):
         """Returns the json-encoded content of a response
         """
@@ -768,12 +775,15 @@ class Response(object):
     def _split_headers_blocks(raw_headers):
         i = 0
         blocks = []
+
+        raw_headers = raw_headers.decode('utf-8')
         for item in raw_headers.strip().split("\r\n"):
             if item.startswith("HTTP"):
                 blocks.append([item])
                 i = len(blocks) - 1
             elif item:
                 blocks[i].append(item)
+        print(repr(blocks))
         return blocks
 
     def _parse_headers_raw(self):

@@ -162,7 +162,7 @@ class RequestsTestCase(BaseTestCase):
         r = requests.get(build_url("headers"), headers=headers)
         self.assertEquals(r.status_code, 200)
 
-        r_json = json.loads(r.content)
+        r_json = json.loads(r.text)
         for field, value in headers:
             self.assertEquals(r_json.get(string.capwords(field, "-")), value)
 
@@ -170,7 +170,7 @@ class RequestsTestCase(BaseTestCase):
         params = {'q': 'test param'}
         r = requests.get(build_url("get""?test=true"), params=params)
         self.assertEquals(r.status_code, 200)
-        args = json.loads(r.content)['args']
+        args = json.loads(r.text)['args']
         self.assertEquals(args['q'][0], params['q'])
         self.assertEquals(args["test"][0], "true")
 
@@ -211,8 +211,8 @@ class RequestsTestCase(BaseTestCase):
                  'test_file2': io.open('README.rst')}
         r = requests.post(build_url('post'),
                           files=files)
-        json_response = json.loads(r.content)
-        self.assertEquals(r.status_code, 201)
+        json_response = json.loads(r.text)
+        self.assertEquals(r.status_code, 200)
         for k, v in list(files.items()):
             self.assertTrue(k in list(json_response['files'].keys()))
 
@@ -282,7 +282,7 @@ class RequestsTestCase(BaseTestCase):
 
         r = requests.get(build_url('cookies'), cookies=cookies)
         #                          debug=stdout_debug)
-        json_response = json.loads(r.content)
+        json_response = json.loads(r.text)
         self.assertEquals(json_response[random_key], random_value)
 
 
@@ -294,7 +294,7 @@ class RequestsTestCase(BaseTestCase):
         r = requests.get(build_url('basic-auth', username, password),
                          auth=auth_manager)
         self.assertEquals(r.status_code, 200)
-        json_response = json.loads(r.content)
+        json_response = json.loads(r.text)
         self.assertEquals(json_response['password'], password)
         self.assertEquals(json_response['username'], username)
         self.assertEquals(json_response['auth-type'], 'basic')
@@ -307,7 +307,7 @@ class RequestsTestCase(BaseTestCase):
         r = requests.get(build_url('digest-auth/auth/', username, password),
                          auth=auth_manager, allow_redirects=True)
         self.assertEquals(r.status_code, 200)
-        json_response = json.loads(r.content)
+        json_response = json.loads(r.text)
         self.assertEquals(json_response['password'], password)
         self.assertEquals(json_response['username'], username)
         self.assertEquals(json_response['auth-type'], 'digest')
@@ -330,7 +330,7 @@ class RequestsTestCase(BaseTestCase):
         self.assertEquals(build_url("get?%s" %
                                     urlencode(((random_key, random_value1), (random_key, random_value2)))), r.url)
 
-        json_response = json.loads(r.content)
+        json_response = json.loads(r.text)
         self.assertTrue(random_value1 in json_response['args'][random_key])
         self.assertTrue(random_value2 in json_response['args'][random_key])
 
@@ -341,7 +341,7 @@ class RequestsTestCase(BaseTestCase):
         r = requests.post(build_url("post"),
                          data={random_key: (random_value1, random_value2)})
 
-        json_response = json.loads(r.content)
+        json_response = json.loads(r.text)
         self.assertTrue(random_value1 in json_response['args'][random_key])
         self.assertTrue(random_value2 in json_response['args'][random_key])
 
@@ -361,7 +361,7 @@ class RequestsTestCase(BaseTestCase):
 
         self.assertEquals(r.headers['Content-Encoding'], 'gzip')
 
-        json_response = json.loads(r.content)
+        json_response = json.loads(r.text)
         self.assertEquals(json_response['gzipped'], True)
 
     def test_response_info(self):
@@ -400,7 +400,7 @@ class RequestsTestCase(BaseTestCase):
         self.assertEquals(build_url("get?%s" %
                                     urlencode(((random_key, random_value1), (random_key, random_value2)))), r.url)
 
-        json_response = json.loads(r.content)
+        json_response = json.loads(r.text)
         self.assertTrue(isinstance(r.json, dict))
         self.assertEquals(json_response, r.json)
         self.assertTrue(random_value1 in r.json['args'][random_key])
@@ -1015,7 +1015,7 @@ class AuthManagersTestCase(BaseTestCase):
 
 #        self.assertEquals(oauth_manager._debug, stdout_debug)
         self.assertEquals(r.status_code, 200)
-        self.assertEquals(json.loads(r.content)['success'], True)
+        self.assertEquals(json.loads(r.text)['success'], True)
 
 
 
