@@ -427,7 +427,7 @@ class Request(object):
         if getattr(opener, "dirty", True):
             opener = self.clean_opener(opener)
 
-        logger.debug("open url: %s" % url)
+        logger.debug("open url: %s" % repr(url))
         opener.setopt(pycurl.URL, url)
         opener.setopt(pycurl.NOSIGNAL, 1)
 
@@ -444,6 +444,7 @@ class Request(object):
             logger.debug("Setup custom headers %s" %
                          "\r\n".join(["%s: %s" % (f, v) for f, v
                                       in list(CaseInsensitiveDict(self._headers).items())]))
+
             opener.setopt(pycurl.HTTPHEADER, ["%s: %s" % (capwords(f, "-"), v) for f, v
                                               in list(CaseInsensitiveDict(self._headers).items())])
 
@@ -505,7 +506,8 @@ class Request(object):
                 else:
                     raise InterfaceError("Proxy auth data must be tuple")
 
-        logger.debug("Setup user agent %s" % self.user_agent)
+        logger.debug("Setup user agent %s" % repr(self.user_agent))
+
         opener.setopt(pycurl.USERAGENT, self.user_agent)
 
         if self._validate_cert not in (None, False):
@@ -528,11 +530,13 @@ class Request(object):
         # Note that this certificate is the private key and the private certificate concatenated!
         # If this option is used several times, the last one will be used.
         if self._cert:
+            logger.debug("Use self._cert")
             opener.setopt(pycurl.SSLCERT, self._cert)
 
         if self._ip_v6:
             opener.setopt(pycurl.IPRESOLVE, pycurl.IPRESOLVE_WHATEVER)
         else:
+            logger.debug("IPRESOLVE_V4")
             opener.setopt(pycurl.IPRESOLVE, pycurl.IPRESOLVE_V4)
 
         # opener.setopt(c.NOPROGRESS, 0)
@@ -551,9 +555,11 @@ class Request(object):
                 value = quote_plus(value)
                 chunks.append('%s=%s;' % (name, value))
             if chunks:
+                logger.debug("setting cookie chunks")
                 opener.setopt(pycurl.COOKIE, ''.join(chunks))
         else:
             # set empty cookie to activate cURL cookies
+            logger.debug("setting blank cookies")
             opener.setopt(pycurl.COOKIELIST, '')
 
         curl_options = {
@@ -563,7 +569,7 @@ class Request(object):
             "PUT": pycurl.PUT,
             "HEAD": pycurl.NOBODY}
 
-        logger.debug("Use method %s for request" % self._method)
+        logger.debug("Use method %s for request" % repr(self._method))
         if self._method in list(curl_options.values()):
             opener.setopt(curl_options[self._method], True)
         elif self._method in self.SUPPORTED_METHODS:
@@ -611,11 +617,11 @@ class Request(object):
 
         if isinstance(self._options, (tuple, list)):
             for key, value in self._options:
+                logger.debug("setting key: %s, value: %s" % (key, value))
                 opener.setopt(key, value)
 
-
-        self.body_output = io.StringIO()
-        self.headers_output = io.StringIO()
+        self.body_output = io.BytesIO()
+        self.headers_output = io.BytesIO()
 
         self.setup_writers(opener, self.headers_output.write, self.body_output.write)
 

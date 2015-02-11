@@ -37,19 +37,19 @@ from human_curl.exceptions import (CurlError, InterfaceError)
 
 logger = logging.getLogger("human_curl.test")
 
-## async_logger = logging.getLogger("human_curl.async")
-## async_logger.setLevel(logging.DEBUG)
+async_logger = logging.getLogger("human_curl.core")
+async_logger.setLevel(logging.DEBUG)
 
 ## # Add the log message handler to the logger
 ## # LOG_FILENAME = os.path.join(os.path.dirname(__file__), "debug.log")
 ## # handler = logging.handlers.FileHandler(LOG_FILENAME)
-## handler = logging.StreamHandler()
+handler = logging.StreamHandler()
 
-## formatter = logging.Formatter("%(levelname)s %(asctime)s %(module)s [%(lineno)d] %(process)d %(thread)d | %(message)s ")
+formatter = logging.Formatter("%(levelname)s %(asctime)s %(module)s [%(lineno)d] %(process)d %(thread)d | %(message)s ")
 
-## handler.setFormatter(formatter)
+handler.setFormatter(formatter)
 
-## async_logger.addHandler(handler)
+async_logger.addHandler(handler)
 
 
 TEST_METHODS = (
@@ -61,8 +61,8 @@ TEST_METHODS = (
     ('options', requests.options))
 
 # Use https://github.com/Lispython/httphq
-HTTP_TEST_URL = os.environ.get('HTTP_TEST_URL', 'http://h.wrttn.me')
-HTTPS_TEST_URL = os.environ.get('HTTPS_TEST_URL', 'https://h.wrttn.me')
+HTTP_TEST_URL = os.environ.get('HTTP_TEST_URL', 'http://httpbin.org')
+HTTPS_TEST_URL = os.environ.get('HTTPS_TEST_URL', 'http://httpbin.org')
 
 
 CurlError("Use {0} as test server".format(HTTP_TEST_URL))
@@ -505,13 +505,10 @@ class UtilsTestCase(BaseTestCase):
 
     def test_decode_gzip(self):
         from gzip import GzipFile
-        try:
-            from cString import StringIO
-        except ImportError:
-            from io import StringIO
+
 
         data_for_gzip = Request.__doc__
-        tmp_buffer = StringIO()
+        tmp_buffer = io.BytesIO()
 
         gziped_buffer = GzipFile(
             fileobj=tmp_buffer,
