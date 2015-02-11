@@ -61,6 +61,7 @@ def utf8(value):
     assert isinstance(value, str)
     return to_unicode(value).encode("utf-8")
 
+
 _TO_UNICODE_TYPES = (str, type(None))
 def to_unicode(value):
     """Converts a string argument to a unicode string.

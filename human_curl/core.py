@@ -13,6 +13,7 @@ Heart of human_curl library
 
 import time
 import io
+import sys
 from os.path import exists as file_exists
 from logging import getLogger
 from re import compile as re_compile
@@ -32,8 +33,6 @@ from .exceptions import (InvalidMethod, CurlError, InterfaceError)
 from .utils import (decode_gzip, CaseInsensitiveDict, to_cookiejar,
                     morsel_to_cookie, data_wrapper, make_curl_post_files,
                     to_unicode, logger_debug, urlnoencode)
-
-
 
 try:
     import platform
@@ -292,7 +291,10 @@ class Request(object):
         scheme, netloc, path, params, query, fragment = urlparse(self._url)
 
         # IDN domains support
-        netloc = to_unicode(netloc).encode('idna')
+        netloc = to_unicode(netloc)
+        # removed idna encode as it was causing python3 urlunparse to error
+        # print(repr(netloc), repr(netloc.encode('idna')))
+        # netloc = netloc.encode('idna')
 
         if not netloc:
             raise ValueError("Invalid url")
@@ -331,7 +333,6 @@ class Request(object):
         del tmp
 
         self._url = urlunparse([scheme, netloc, path, params, query, fragment])
-
         return self._url
 
     def send(self):
@@ -341,12 +342,19 @@ class Request(object):
         """
 
         try:
-            opener = self.build_opener(self._build_url())
+            url = self._build_url()
+            print(repr(url))
+            opener = self.build_opener(url)
             opener.perform()
             # if close before getinfo, raises pycurl.error can't invote getinfo()
             # opener.close()
         except pycurl.error as e:
-            raise CurlError(e[0], e[1])
+
+
+            exc = sys.exc_info()[1]
+            code = exc.args[0]
+            message = exc.args[1]
+            raise CurlError(code, message)
         else:
             self.response = self.make_response()
 
@@ -489,7 +497,7 @@ class Request(object):
             opener.setopt(pycurl.PROXYTYPE, get_code_by_name(proxy_type))
 
             if proxy_type.upper() in ("CONNECT", "SSL", "HTTPS"):
-                # if CONNECT proxy, need use HTTPPROXYTINNEL
+                # if CONNECT proxy, need use HTTPPROXYTUNNEL
                 opener.setopt(pycurl.HTTPPROXYTUNNEL, 1)
             if proxy_auth:
                 if len(proxy_auth) == 2:
@@ -514,11 +522,11 @@ class Request(object):
             if file_exists(self._ca_certs):
                 opener.setopt(pycurl.CAINFO, self._ca_certs)
 
-        ## (HTTPS) Tells curl to use the specified certificate file when getting a
-        ## file with HTTPS. The certificate must be in PEM format.
-        ## If the optional password isn't specified, it will be queried for on the terminal.
-        ## Note that this certificate is the private key and the private certificate concatenated!
-        ## If this option is used several times, the last one will be used.
+        # (HTTPS) Tells curl to use the specified certificate file when getting a
+        # file with HTTPS. The certificate must be in PEM format.
+        # If the optional password isn't specified, it will be queried for on the terminal.
+        # Note that this certificate is the private key and the private certificate concatenated!
+        # If this option is used several times, the last one will be used.
         if self._cert:
             opener.setopt(pycurl.SSLCERT, self._cert)
 
