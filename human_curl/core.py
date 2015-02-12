@@ -294,7 +294,6 @@ class Request(object):
         netloc = to_unicode(netloc)
         # removed idna encode as it was causing python3 urlunparse to error
         # print(repr(netloc), repr(netloc.encode('idna')))
-        # netloc = netloc.encode('idna')
 
         if not netloc:
             raise ValueError("Invalid url")
@@ -331,8 +330,16 @@ class Request(object):
             query = noencode(tmp)
 
         del tmp
+        print(repr([scheme, netloc, path, query, fragment]))
+        url_unparse_list = [
+            scheme.encode('utf8'),
+            netloc.encode('idna'),
+            path.encode('utf8'),
+            params.encode('utf8'),
+            query.encode('utf8'),
+            fragment.encode('utf8')]
 
-        self._url = urlunparse([scheme, netloc, path, params, query, fragment])
+        self._url = urlunparse(url_unparse_list)
         return self._url
 
     def send(self):

@@ -498,6 +498,7 @@ def normalize_parameters(url, params=None):
     query = urllib.parse.urlparse(url)[4]
     parameters = parse_qs(utf8(query), keep_blank_values=True)
     for k, v in list(parameters.items()):
+        print(repr([k, v]))
         parameters[k] = urllib.parse.unquote(v[0])
     url_items = list(parameters.items())
     url_items = [(utf8(k), utf8(v)) for k, v in url_items if k != 'oauth_signature' ]

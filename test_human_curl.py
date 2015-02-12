@@ -362,7 +362,7 @@ class RequestsTestCase(BaseTestCase):
         self.assertEquals(r.status_code, 200)
         self.assertEquals(len(r.history), 3)
         self.assertEquals(r.url, build_url("get"))
-        self.assertEquals(r._request_url, build_url("redirect/3"))
+        self.assertEquals(r._request_url, build_url("redirect/3").encode('utf8  '))
         self.assertRaises(CurlError, requests.get, build_url("redirect", '7'),
                           allow_redirects=True)
 
@@ -423,7 +423,7 @@ class RequestsTestCase(BaseTestCase):
         key, value = 'email', 'user@domain.com'
         response = requests.get(build_url("get""?%s=%s" % (key, value)), params=params)
         self.assertEquals(response.status_code, 200)
-        self.assertEqual("{0}/get?email=user%40domain.com&q=value+with+space+and+%40".format(HTTP_TEST_URL), response.request._url)
+        self.assertEqual("{0}/get?email=user%40domain.com&q=value+with+space+and+%40".format(HTTP_TEST_URL).encode('utf8    '), response.request._url)
         args = json.loads(response.text)['args']
         self.assertEquals(args['q'], params['q'])
         self.assertEquals(args[key], value)
@@ -440,27 +440,27 @@ class RequestsTestCase(BaseTestCase):
             self.assertEqual(e.code, 52)
         else:
             self.assertEquals(response.status_code, 400)
-            self.assertEqual("{0}/get?email=user@domain.com&q=value with space and @".format(HTTP_TEST_URL), response.request._url)
+            self.assertEqual("{0}/get?email=user@domain.com&q=value with space and @".format(HTTP_TEST_URL).encode('utf8'), response.request._url)
 
     def test_request_key_with_empty_value(self):
         key = "key"
         value = ""
         url = build_url("get""?%s=%s" % (key, value))
         response = requests.get(url)
-        self.assertEqual(url, response.request.url)
+        self.assertEqual(url.encode('utf8'), response.request.url)
 
     def test_request_key_no_equal(self):
         key = "key+"
         url = build_url("get""?%s" % key)
         response = requests.get(url)
-        self.assertEqual("{0}/get?key%2B".format(HTTP_TEST_URL), response.request.url)
+        self.assertEqual("{0}/get?key%2B".format(HTTP_TEST_URL).encode('utf8'), response.request.url)
 
     def test_request_key_no_equal_and_params(self):
         key = "key"
         params = {"a": "b"}
         url = build_url("get""?%s" % key)
         response = requests.get(url, params=params)
-        self.assertEqual(url + "=" + "&a=b", response.request.url)
+        self.assertEqual((url + "=" + "&a=b").encode('utf8'), response.request.url)
 
 
 class ResponseTestCase(BaseTestCase):
