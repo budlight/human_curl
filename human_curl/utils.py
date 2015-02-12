@@ -50,6 +50,7 @@ def url_escape(value):
 #    return quote_plus(utf8(value))
 
 _UTF8_TYPES = (bytes, type(None))
+
 def utf8(value):
     """Converts a string argument to a byte string.
 
@@ -496,12 +497,12 @@ def normalize_parameters(url, params=None):
     items = []
     # Include any query string parameters from the provided URL
     query = urllib.parse.urlparse(url)[4]
-    parameters = parse_qs(utf8(query), keep_blank_values=True)
+    parameters = parse_qs(query, keep_blank_values=True)
     for k, v in list(parameters.items()):
         print(repr([k, v]))
         parameters[k] = urllib.parse.unquote(v[0])
     url_items = list(parameters.items())
-    url_items = [(utf8(k), utf8(v)) for k, v in url_items if k != 'oauth_signature' ]
+    url_items = [(k, v) for k, v in url_items if k != 'oauth_signature' ]
     items.extend(url_items)
 
     if params:
@@ -511,15 +512,15 @@ def normalize_parameters(url, params=None):
             # 1.0a/9.1.1 states that kvp must be sorted by key, then by value,
             # so we unpack sequence values into multiple items for sorting.
             if isinstance(value, str):
-                items.append((utf8(key), utf8(value)))
+                items.append((key, value))
             else:
                 try:
                     value = list(value)
                 except TypeError as e:
                     assert 'is not iterable' in str(e)
-                    items.append((utf8(key), utf8(value)))
+                    items.append((key, value))
                 else:
-                    items.extend((utf8(key), utf8(item)) for item in value)
+                    items.extend((key, item) for item in value)
 
     items.sort()
     encoded_str = urllib.parse.urlencode(items)
