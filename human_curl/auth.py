@@ -20,7 +20,6 @@ import pycurl
 
 from urllib.parse import urlencode
 import sys
-print(sys.path)
 
 from .exceptions import InterfaceError
 from .utils import *
