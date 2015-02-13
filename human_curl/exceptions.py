@@ -29,6 +29,8 @@ class InvalidMethod(Exception):
     """Exception raise if `Request.__init__()` get unsupported method
     """
 
+
+
 class CurlError(Exception):
     """Exception raise when `pycurl.Curl` raise connection errors
 
@@ -48,3 +50,24 @@ class InterfaceError(Exception):
 class AuthError(Exception):
     """Raised by auth manager
     """
+
+# below are exceptions actually used commonly by requests library
+# we may want to simply consider importing them from requests
+class Timeout(Exception):
+    pass
+
+
+class ConnectionError(Exception):
+    pass
+
+
+class InvalidURL(Exception):
+    pass
+
+
+class RequestException(Exception):
+    pass
+
+
+class TooManyRedirects(Exception):
+    pass
