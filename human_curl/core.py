@@ -330,7 +330,7 @@ class Request(object):
             query = noencode(tmp)
 
         del tmp
-        print(repr([scheme, netloc, path, query, fragment]))
+        # print(repr([scheme, netloc, path, query, fragment]))
         url_unparse_list = [
             scheme.encode('utf8'),
             netloc.encode('idna'),
@@ -350,7 +350,7 @@ class Request(object):
 
         try:
             url = self._build_url()
-            print(repr(url))
+            # print(repr(url))
             opener = self.build_opener(url)
             opener.perform()
             # if close before getinfo, raises pycurl.error can't invote getinfo()
@@ -790,7 +790,7 @@ class Response(object):
                 i = len(blocks) - 1
             elif item:
                 blocks[i].append(item)
-        print(repr(blocks))
+        # print(repr(blocks))
         return blocks
 
     def _parse_headers_raw(self):
