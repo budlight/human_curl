@@ -14,7 +14,6 @@ Heart of human_curl library
 import time
 import io
 import sys
-import chardet
 from os.path import exists as file_exists
 from logging import getLogger
 from re import compile as re_compile
@@ -34,6 +33,8 @@ from .exceptions import (InvalidMethod, CurlError, InterfaceError)
 from .utils import (decode_gzip, CaseInsensitiveDict, to_cookiejar,
                     morsel_to_cookie, data_wrapper, make_curl_post_files,
                     to_unicode, logger_debug, urlnoencode)
+from requests.packages import chardet
+
 
 try:
     import platform
