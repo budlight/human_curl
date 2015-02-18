@@ -764,12 +764,6 @@ class Response(object):
         return self._content
 
     @property
-    def text(self):
-        """Returns decoded self._content
-        """
-        return self.content.decode('utf-8')
-
-    @property
     def apparent_encoding(self):
         """The apparent encoding, provided by the chardet library"""
         return chardet.detect(self.content)['encoding']
@@ -787,13 +781,13 @@ class Response(object):
 
         # Try charset from content-type
         content = None
-        encoding = self.encoding
+        encoding = None
 
         if not self.content:
             return str('')
 
         # Fallback to auto-detected encoding.
-        if self.encoding is None:
+        if encoding is None:
             encoding = self.apparent_encoding
 
         # Decode unicode from given encoding.
