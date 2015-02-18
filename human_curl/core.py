@@ -677,7 +677,7 @@ class Response(object):
         self._curl_opener = curl_opener
 
         # StringIO object for response body
-        self._body_otput = body_output
+        self._body_output = body_output
         # StringIO object for response headers
         self._headers_output = headers_output
 
@@ -755,11 +755,11 @@ class Response(object):
             if 'gzip' in self.headers.get('Content-Encoding', '') and \
                    'zlib' not in pycurl.version:
                 try:
-                    self._content = decode_gzip(self._body_otput.getvalue())
-                except zlib.error:
-                    pass
+                    self._content = decode_gzip(self._body_output.getvalue())
+                except zlib.error as e:
+                    raise
             else:
-                self._content = self._body_otput.getvalue()
+                self._content = self._body_output.getvalue()
         return self._content
 
     @property
