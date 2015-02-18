@@ -21,7 +21,7 @@ packages = [
 ]
 
 requires = [
-    'pycurl'
+    'pycurl', 'chardet'
 ]
 
 with open('README.rst', 'r', 'utf-8') as f:
