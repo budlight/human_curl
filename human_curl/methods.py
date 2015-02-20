@@ -46,6 +46,8 @@ def request(method, url, params=None, data=None, headers=None, cookies=None,
            TODO: multiple proxies support?
            (('http', ('127.0.0.1', 9050)),
             ('socks', ('127.0.0.1', 9050, ('username', 'password')))
+      :param proxies: (optional) Dictionary mapping protocol to the URL of the proxy.
+
     - `auth`: (dict, tuple or list) for resource base auth
     - `network_interface`: (str) use given interface for request
     - `use_gzip`: (bool) accept gzipped data

@@ -33,6 +33,7 @@ from .exceptions import (InvalidMethod, CurlError, InterfaceError)
 from .utils import (decode_gzip, CaseInsensitiveDict, to_cookiejar,
                     morsel_to_cookie, data_wrapper, make_curl_post_files,
                     to_unicode, logger_debug, urlnoencode)
+
 from requests.packages import chardet
 
 
@@ -217,6 +218,7 @@ class Request(object):
             else:
                 self._proxy = proxy
 
+
         if not isinstance(network_interface, (str, type(None))):
             raise InterfaceError("Network interface argument must be string or None")
 
@@ -363,6 +365,7 @@ class Request(object):
             exc = sys.exc_info()[1]
             code = exc.args[0]
             message = exc.args[1]
+            message = opener.errstr()
             raise CurlError(code, message)
         else:
             self.response = self.make_response()
