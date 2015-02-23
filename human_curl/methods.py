@@ -16,7 +16,7 @@ __all__ = ("get", "put", "head", "delete", "post", "options", "request")
 
 
 def request(method, url, params=None, data=None, headers=None, cookies=None,
-            files=None, timeout=None, allow_redirects=False, max_redirects=5, proxy=None,
+            files=None, timeout=None, allow_redirects=True, max_redirects=5, proxy=None,
             auth=None, network_interface=None, use_gzip=None, validate_cert=False,
             ca_certs=None, cert=None, debug=False, user_agent=None, ip_v6=False,
             hooks=None, options=None, callback=None, return_response=True, encode_query=True, **kwargs):

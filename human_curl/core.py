@@ -14,6 +14,7 @@ Heart of human_curl library
 import time
 import io
 import sys
+import tempfile
 from os.path import exists as file_exists
 from logging import getLogger
 from re import compile as re_compile
@@ -138,7 +139,7 @@ class Request(object):
     SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PUT", "OPTIONS")
 
     def __init__(self, method, url, params=None, data=None, headers=None, cookies=None,
-                 files=None, timeout=None, connection_timeout=None, allow_redirects=False,
+                 files=None, timeout=None, connection_timeout=None, allow_redirects=True,
                  max_redirects=5, proxy=None, auth=None, network_interface=None, use_gzip=None,
                  validate_cert=False, ca_certs=None, cert=None, debug=False, user_agent=None,
                  ip_v6=False, options=None, netrc=False, netrc_file=None, encode_query=None, **kwargs):
@@ -209,6 +210,8 @@ class Request(object):
             self._cookies = to_cookiejar(cookies)
         else:
             self._cookies = None
+        if self._cookies is not None:
+            self.cookie_file = tempfile.NamedTemporaryFile()
 
         if isinstance(proxy, type(None)):
             self._proxy = proxy
@@ -365,7 +368,6 @@ class Request(object):
             exc = sys.exc_info()[1]
             code = exc.args[0]
             message = exc.args[1]
-            message = opener.errstr()
             raise CurlError(code, message)
         else:
             self.response = self.make_response()
@@ -556,6 +558,7 @@ class Request(object):
 
         # Add cookies from self._cookies
         if self._cookies is not None:
+            opener.setopt(pycurl.COOKIEJAR, self.cookie_file.name)
             chunks = []
             for cookie in self._cookies:
                 name, value = cookie.name, cookie.value
@@ -582,7 +585,7 @@ class Request(object):
             "HEAD": pycurl.NOBODY}
 
         logger.debug("Use method %s for request" % repr(self._method))
-        if self._method in list(curl_options.values()):
+        if self._method in list(curl_options.keys()):
             opener.setopt(curl_options[self._method], True)
         elif self._method in self.SUPPORTED_METHODS:
             opener.setopt(pycurl.CUSTOMREQUEST, self._method)
@@ -622,10 +625,10 @@ class Request(object):
                         opener.setopt(pycurl.POSTFIELDSIZE, len(self._data))
                 elif isinstance(self._data, (tuple, list, dict)):
                     # use multipart/form-data;
-                    opener.setopt(opener.HTTPPOST, data_wrapper(self._data))
+                    # opener.setopt(opener.HTTPPOST, data_wrapper(self._data))
 
                     # use postfields to send vars as application/x-www-form-urlencoded
-                    # opener.setopt(pycurl.POSTFIELDS, encoded_data)
+                    opener.setopt(pycurl.POSTFIELDS, urlencode(data_wrapper(self._data)))
 
         if isinstance(self._options, (tuple, list)):
             for key, value in self._options:
