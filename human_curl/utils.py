@@ -23,7 +23,7 @@ from http.cookies import Morsel
 from string import capwords
 from os.path import exists as file_exists
 from http.cookiejar import CookieJar, Cookie
-
+from requests.structures import CaseInsensitiveDict
 try:
     bytes
 except Exception:
@@ -85,35 +85,6 @@ def decode_gzip(content):
 
     return zlib.decompress(content, 16 + zlib.MAX_WBITS)
 
-
-class CaseInsensitiveDict(dict):
-    """Case-insensitive Dictionary
-
-    For example, `headers['content-encoding']` will return the
-    value of a `'Content-Encoding'` response header.
-    """
-
-    def __init__(self, *args, **kwargs):
-        tmp_d = dict(*args, **kwargs)
-        super(CaseInsensitiveDict, self).__init__([(k.lower(), v) for k, v in list(tmp_d.items())])
-
-    def __setitem__(self, key, value):
-        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
-
-    def __delitem__(self, key):
-        super(CaseInsensitiveDict, self).__delitem__(key.lower())
-
-    def __contains__(self, key):
-        return key.lower() in self
-
-    def __getitem__(self, key):
-        return super(CaseInsensitiveDict, self).__getitem__(key.lower())
-
-    def has_key(self, key):
-        return key.lower() in super(CaseInsensitiveDict, self)
-
-    def iteritems(self):
-        return ((capwords(k, '-'), v) for k, v in list(super(CaseInsensitiveDict, self).items()))
 
 
 def from_cookiejar(cookiejar):

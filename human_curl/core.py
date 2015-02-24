@@ -459,7 +459,7 @@ class Request(object):
                          "\r\n".join(["%s: %s" % (f, v) for f, v
                                       in list(CaseInsensitiveDict(self._headers).items())]))
 
-            opener.setopt(pycurl.HTTPHEADER, ["%s: %s" % (capwords(f, "-"), v) for f, v
+            opener.setopt(pycurl.HTTPHEADER, ["%s: %s" % (f, v) for f, v
                                               in list(CaseInsensitiveDict(self._headers).items())])
 
         # Option -L  Follow  "Location: "  hints
@@ -594,11 +594,11 @@ class Request(object):
                                 self._method)
 
         # Responses without body
-        if self._method in ("OPTIONS", "HEAD", "DELETE"):
+        if self._method in ("OPTIONS", "HEAD"):
             opener.setopt(pycurl.NOBODY, True)
 
-        if self._method in ("POST", "PUT"):
-            if self._files is not None:
+        if self._method in ("POST", "PUT", "DELETE"):
+            if self._files:
                 post_params = self._files
                 if isinstance(self._data, (tuple, list, dict)):
                     post_params.extend(data_wrapper(self._data))
