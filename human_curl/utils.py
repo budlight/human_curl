@@ -24,6 +24,8 @@ from string import capwords
 from os.path import exists as file_exists
 from http.cookiejar import CookieJar, Cookie
 from requests.structures import CaseInsensitiveDict
+from requests.utils import guess_filename
+
 try:
     bytes
 except Exception:
@@ -230,7 +232,7 @@ def helper(d):
     return tmp
 
 
-#TODO: use custom MultiValue dict
+# TODO: use custom MultiValue dict
 def data_wrapper(data):
     """Convert data to list and returns
     """
@@ -256,32 +258,28 @@ def make_curl_post_files(data):
         raise ValueError("%s argument must be list, tuple or dict, not %s" %
                          ("make_curl_post_files", type(data)))
 
-    def checker(name):
-        if file_exists(str(name)):
-            return (pycurl.FORM_FILE, str(name))
-        else:
-            raise RuntimeError("File %s doesn't exist" % v)
-
     result = []
-    for k, v in iterator:
-        print((k, v))
-        if isinstance(v, tuple):
-            for k2 in v:
-                if isinstance(k2, io.IOBase):
-                    result.append((k, checker(k2.name)))
-                elif isinstance(k2, str):
-                    result.append((k, checker(k2)))
-                else:
-                    raise RuntimeError("File %s doesn't exist" % v)
-        elif isinstance(v, io.IOBase):
-            result.append((k, checker(str(v.name))))
-        elif isinstance(v, str):
-            result.append((k, checker(str(v))))
+    for (k, v) in iterator:
+        # support for explicit filename
+        ft = None
+        fh = None
+        if isinstance(v, (tuple, list)):
+            if len(v) == 2:
+                fn, fp = v
+            elif len(v) == 3:
+                fn, fp, ft = v
+            else:
+                fn, fp, ft, fh = v
         else:
-            raise InterfaceError("Not allowed file value")
+            fn = guess_filename(v) or k
+            fp = v
+        if isinstance(fp, str):
+            fp = io.StringIO(fp)
+        if isinstance(fp, bytes):
+            fp = io.BytesIO(fp)
+        result.append((k, (pycurl.FORM_BUFFER, fn, pycurl.FORM_BUFFERPTR, fp.read())))
 
     return result
-
 
 
 def parse_dict_header(value):
