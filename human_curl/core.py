@@ -439,6 +439,7 @@ class Request(object):
         opener = opener or pycurl.Curl()
 
         if getattr(opener, "dirty", True):
+            # print("cleaning opener" , url)
             opener = self.clean_opener(opener)
 
         logger.debug("open url: %s" % repr(url))
@@ -458,7 +459,6 @@ class Request(object):
             logger.debug("Setup custom headers %s" %
                          "\r\n".join(["%s: %s" % (f, v) for f, v
                                       in list(CaseInsensitiveDict(self._headers).items())]))
-
             opener.setopt(pycurl.HTTPHEADER, ["%s: %s" % (f, v) for f, v
                                               in list(CaseInsensitiveDict(self._headers).items())])
 
@@ -811,7 +811,6 @@ class Response(object):
 
         return content
 
-    @property
     def json(self):
         """Returns the json-encoded content of a response
         """
