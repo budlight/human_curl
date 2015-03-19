@@ -30,7 +30,7 @@ import pycurl
 from . import get_version
 import simplejson as json
 from .auth import AuthManager, BasicAuth
-from .exceptions import (InvalidMethod, CurlError, InterfaceError)
+from .exceptions import (InvalidMethod, CurlError, InterfaceError, HTTPError)
 from .utils import (decode_gzip, CaseInsensitiveDict, to_cookiejar,
                     morsel_to_cookie, data_wrapper, make_curl_post_files,
                     to_unicode, logger_debug, urlnoencode)
@@ -744,6 +744,20 @@ class Response(object):
         if not self._status_code:
             self._status_code = int(self._curl_opener.getinfo(pycurl.HTTP_CODE))
         return self._status_code
+
+
+    def raise_for_status(self):
+        http_error_msg = ''
+
+        if 400 <= self.status_code < 500:
+            http_error_msg = '%s Client Error' % (self.status_code)
+
+        elif 500 <= self.status_code < 600:
+            http_error_msg = '%s Server Error' % (self.status_code)
+
+        if http_error_msg:
+            raise HTTPError(code=self.status_code, message=http_error_msg, response=self)
+
 
     @property
     def cookiesjar(self):

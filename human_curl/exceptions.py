@@ -20,8 +20,9 @@ class HTTPError(Exception):
     :param code: HTTP error integer error code, e. g. 404
     :param message: error message string
     """
-    def __init__(self, code, message=None):
+    def __init__(self, code, message=None, response=None):
         self.code = code
+        self.response = response
         message = message or responses.get(code, "Unknown")
         Exception.__init__(self, "%d: %s" % (self.code, message))
 
