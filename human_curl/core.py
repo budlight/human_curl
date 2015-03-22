@@ -36,6 +36,7 @@ from .utils import (decode_gzip, CaseInsensitiveDict, to_cookiejar,
                     to_unicode, logger_debug, urlnoencode)
 
 from requests.packages import chardet
+from requests.packages.urllib3.util.url import parse_url
 
 
 try:
@@ -140,7 +141,7 @@ class Request(object):
 
     def __init__(self, method, url, params=None, data=None, headers=None, cookies=None,
                  files=None, timeout=None, connection_timeout=None, allow_redirects=True,
-                 max_redirects=5, proxy=None, auth=None, network_interface=None, use_gzip=None,
+                 max_redirects=5, proxies=None, auth=None, network_interface=None, use_gzip=None,
                  validate_cert=False, ca_certs=None, cert=None, debug=False, user_agent=None,
                  ip_v6=False, options=None, netrc=False, netrc_file=None, encode_query=None, **kwargs):
         """A single HTTP / HTTPS request
@@ -213,13 +214,31 @@ class Request(object):
         if self._cookies is not None:
             self.cookie_file = tempfile.NamedTemporaryFile()
 
-        if isinstance(proxy, type(None)):
-            self._proxy = proxy
-        elif isinstance(proxy, tuple):
-            if len(proxy) != 2 or not isinstance(proxy[1], tuple):
-                raise InterfaceError('Proxy must be a tuple object')
-            else:
-                self._proxy = proxy
+        if isinstance(proxies, type(None)):
+            self._proxy = None
+        elif isinstance(proxies, dict):
+            if proxies.get('https'):
+
+                proxy = parse_url(proxies.get('https'))
+
+                if not proxy.port:
+                    port = port_by_scheme.get(proxy.scheme, 80)
+                    proxy = proxy._replace(port=port)
+                assert proxy.scheme in ("http", "https"), \
+                    'Not supported proxy scheme %s' % proxy.scheme
+                self._proxy = ('https', (proxy.host, proxy.port))
+
+            elif proxies.get('socks5'):
+
+                proxy = parse_url(proxies.get('socks5'))
+
+                if not proxy.port:
+                    port = port_by_scheme.get(proxy.scheme, 1080)
+                    proxy = proxy._replace(port=port)
+                assert proxy.scheme in ("socks5",), \
+                    'Not supported proxy scheme %s' % proxy.scheme
+                self._proxy = ('socks5', (proxy.host, proxy.port))
+
 
 
         if not isinstance(network_interface, (str, type(None))):
