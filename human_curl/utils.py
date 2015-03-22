@@ -247,6 +247,7 @@ def data_wrapper(data):
                          ("data_wrapper", type(data)))
 
 
+
 def make_curl_post_files(data):
     """Convert parameters dict, list or tuple to cURL style tuple
     """
@@ -273,13 +274,16 @@ def make_curl_post_files(data):
         else:
             fn = guess_filename(v) or k
             fp = v
-        if isinstance(fp, str):
-            fp = io.StringIO(fp)
+        if isinstance(fp, (str, int)):
+            #fp = io.StringIO(fp)
+            result.append((k, (pycurl.FORM_CONTENTS, str(fp))))
+
         if isinstance(fp, bytes):
             fp = io.BytesIO(fp)
-        result.append((k, (pycurl.FORM_BUFFER, fn, pycurl.FORM_BUFFERPTR, fp.read())))
+            result.append((k, (pycurl.FORM_BUFFER, fn, pycurl.FORM_BUFFERPTR, fp.read())))
     # print(result)
     return result
+
 
 
 def parse_dict_header(value):

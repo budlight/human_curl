@@ -620,8 +620,7 @@ class Request(object):
             if self._files:
                 post_params = self._files
                 if isinstance(self._data, (tuple, list, dict)):
-                    post_params.extend(data_wrapper(self._data))
-                print(repr(post_params))
+                    post_params.extend(make_curl_post_files(self._data))
                 opener.setopt(opener.HTTPPOST, post_params)
             else:
                 if isinstance(self._data, str):
