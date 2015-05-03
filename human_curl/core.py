@@ -226,7 +226,8 @@ class Request(object):
                     proxy = proxy._replace(port=port)
                 assert proxy.scheme in ("http", "https"), \
                     'Not supported proxy scheme %s' % proxy.scheme
-                self._proxy = ('https', (proxy.host, proxy.port))
+                self._proxy = ('https', (proxy.host, proxy.port), proxy.auth)
+                print(self._proxy)
 
             elif proxies.get('socks5'):
 
@@ -534,8 +535,8 @@ class Request(object):
                 # if CONNECT proxy, need use HTTPPROXYTUNNEL
                 opener.setopt(pycurl.HTTPPROXYTUNNEL, 1)
             if proxy_auth:
-                if len(proxy_auth) == 2:
-                    opener.setopt(pycurl.PROXYUSERPWD, "%s:%s" % proxy_auth)
+                if len(proxy_auth.split(':')) == 2:
+                    opener.setopt(pycurl.PROXYUSERPWD, "%s" % proxy_auth)
                 else:
                     raise InterfaceError("Proxy auth data must be tuple")
 
