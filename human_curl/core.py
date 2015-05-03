@@ -537,6 +537,7 @@ class Request(object):
             if proxy_auth:
                 if len(proxy_auth.split(':')) == 2:
                     opener.setopt(pycurl.PROXYUSERPWD, "%s" % proxy_auth)
+                    print('setting proxy auth: %s' % proxy_auth)
                 else:
                     raise InterfaceError("Proxy auth data must be tuple")
 
