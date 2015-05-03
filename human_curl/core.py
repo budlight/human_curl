@@ -238,7 +238,7 @@ class Request(object):
                     proxy = proxy._replace(port=port)
                 assert proxy.scheme in ("socks5",), \
                     'Not supported proxy scheme %s' % proxy.scheme
-                self._proxy = ('socks5', (proxy.host, proxy.port))
+                self._proxy = ('socks5', (proxy.host, proxy.port), proxy.auth)
 
 
 
