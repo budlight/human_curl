@@ -520,7 +520,7 @@ class Request(object):
 
         # Setup proxy for request
         if self._proxy is not None:
-            logger.debug("Use proxies %s"  % ' - '.join(self._proxy))
+            logger.debug("Use proxies %s"  % str(self._proxy))
             if len(self._proxy) > 2:
                 proxy_type, proxy_addr, proxy_auth = self._proxy
             else:
