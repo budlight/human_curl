@@ -143,7 +143,7 @@ class Request(object):
                  files=None, timeout=None, connection_timeout=None, allow_redirects=True,
                  max_redirects=5, proxies=None, auth=None, network_interface=None, use_gzip=None,
                  validate_cert=False, ca_certs=None, cert=None, debug=False, user_agent=None,
-                 ip_v6=False, options=None, netrc=False, netrc_file=None, encode_query=None, **kwargs):
+                 ip_v6=False, options=None, netrc=False, netrc_file=None, encode_query=None, opener=None, **kwargs):
         """A single HTTP / HTTPS request
 
         Arguments:
@@ -292,6 +292,11 @@ class Request(object):
 
         self._encode_query = encode_query
 
+        if opener:
+            self._opener = opener
+        else:
+            self._opener = None
+
     def __repr__(self, ):
         # TODO: collect `Request` settings into representation string
         return "<%s: %s [ %s ]>" % (self.__class__.__name__, self._method, self._url)
@@ -378,7 +383,7 @@ class Request(object):
         try:
             url = self._build_url()
             # print(repr(url))
-            opener = self.build_opener(url)
+            opener = self.build_opener(url, opener=self._opener)
             opener.perform()
             # if close before getinfo, raises pycurl.error can't invote getinfo()
             # opener.close()
@@ -460,7 +465,8 @@ class Request(object):
 
         if getattr(opener, "dirty", True):
             # print("cleaning opener" , url)
-            opener = self.clean_opener(opener)
+            # opener = self.clean_opener(opener)
+            pass
 
         logger.debug("open url: %s" % repr(url))
         opener.setopt(pycurl.URL, url)
