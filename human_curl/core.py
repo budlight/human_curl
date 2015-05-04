@@ -631,10 +631,15 @@ class Request(object):
                     post_params.extend(make_curl_post_files(self._data))
                 opener.setopt(opener.HTTPPOST, post_params)
             else:
-                if isinstance(self._data, str):
-                    logger.debug(("self._data is string"))
+                if isinstance(self._data, (str, bytes)):
+                    logger.debug(("self._data is string or bytes"))
                     logger.debug(("self._data", self._data))
-                    request_buffer = io.StringIO(self._data)
+                    if isinstance(self._data, (str)):
+                        request_buffer = io.StringIO(self._data)
+                    elif isinstance(self._data, (bytes)):
+                        request_buffer = io.BytesIO(self._data)
+                    else:
+                        raise Exception('unknown buffer type')
 
                     # raw data for body request
                     opener.setopt(pycurl.READFUNCTION, request_buffer.read)
