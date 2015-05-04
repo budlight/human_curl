@@ -200,7 +200,7 @@ class Request(object):
         self._params = data_wrapper(params)
 
         # String, dict, tuple, list
-        if isinstance(data, (str, type(None))):
+        if isinstance(data, (basestring, type(None))):
             self._data = data
         else:
             self._data = data_wrapper(data)
