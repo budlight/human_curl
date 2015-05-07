@@ -276,7 +276,9 @@ def make_curl_post_files(data):
             fp = v
         if isinstance(fp, (str, int)):
             #fp = io.StringIO(fp)
-            result.append((k, (pycurl.FORM_CONTENTS, str(fp))))
+            result.append(
+                (k, (pycurl.FORM_CONTENTS, str(fp), pycurl.FORM_CONTENTTYPE, "text/plain; charset=UTF-8"))
+            )
 
         if isinstance(fp, bytes):
             fp = io.BytesIO(fp)
