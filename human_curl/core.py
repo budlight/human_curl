@@ -141,7 +141,7 @@ class Request(object):
 
     def __init__(self, method, url, params=None, data=None, headers=None, cookies=None,
                  files=None, timeout=None, connection_timeout=None, allow_redirects=True,
-                 max_redirects=5, proxies=None, auth=None, network_interface=None, use_gzip=None,
+                 max_redirects=5, proxies=None, auth=None, network_interface=None, use_gzip=True,
                  validate_cert=False, ca_certs=None, cert=None, debug=False, user_agent=None,
                  ip_v6=False, options=None, netrc=False, netrc_file=None, encode_query=None, opener=None, **kwargs):
         """A single HTTP / HTTPS request
